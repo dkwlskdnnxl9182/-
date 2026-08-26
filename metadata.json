@@ -1,0 +1,6 @@
+{
+  "name": "JobStitch",
+  "description": "기업용 채용 공채 캘린더, 기업 인텔리전스 가이드 및 맞춤형 스펙 진단 포털",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
