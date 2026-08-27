@@ -118,7 +118,7 @@ export const TopNavBar: React.FC<TopNavBarProps> = ({ onOpenMobileMenu }) => {
       </div>
 
       {/* Center Title (Desktop) */}
-      <h2 className="hidden lg:block font-hanken font-bold text-xl text-[#00236f] absolute left-1/2 -translate-x-1/2 tracking-tight">
+      <h2 className="hidden lg:block font-hanken font-bold text-xl text-[#00236f] absolute left-[58%] -translate-x-1/2 tracking-tight">
         {isKo ? currentTitle.ko : currentTitle.en}
       </h2>
 

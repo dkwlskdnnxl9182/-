@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { RadarChart } from './RadarChart';
-import { POPULAR_CERTIFICATIONS, CERTIFICATION_TRANSLATIONS, LANGUAGE_LEVEL_MAP } from '../data/mockData';
+import {
+  POPULAR_CERTIFICATIONS,
+  CERTIFICATION_TRANSLATIONS,
+  LANGUAGE_LEVEL_MAP,
+  COMPANIES_INTELLIGENCE
+} from '../data/mockData';
 
 export const SpecDiagnosisView: React.FC = () => {
   const {
@@ -19,12 +24,11 @@ export const SpecDiagnosisView: React.FC = () => {
   const [showAddCertModal, setShowAddCertModal] = useState(false);
   const [customCertInput, setCustomCertInput] = useState('');
 
-  const targetRoles = [
-    { id: 'samsung', labelKo: '삼성전자 - IT 개발 (DX)', labelEn: 'Samsung Electronics - IT (DX)' },
-    { id: 'sk-hynix', labelKo: 'SK하이닉스 - 반도체 R&D', labelEn: 'SK Hynix - Semiconductor R&D' },
-    { id: 'hyundai', labelKo: '현대자동차 - SDV 모빌리티 SW', labelEn: 'Hyundai Motors - SDV SW' },
-    { id: 'kepco', labelKo: '한국전력공사 - 사무 / 행정', labelEn: 'KEPCO - Admin / Finance' }
-  ];
+  const targetRoles = COMPANIES_INTELLIGENCE.map(company => ({
+    id: company.id,
+    labelKo: `${company.name} - ${company.division}`,
+    labelEn: `${company.nameEn} - ${company.divisionEn}`
+  }));
 
   const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newCompanyId = e.target.value;
@@ -47,6 +51,13 @@ export const SpecDiagnosisView: React.FC = () => {
 
   const handleLangChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     updateUserSpec({ englishProficiency: e.target.value });
+  };
+
+  const handleNcsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseFloat(e.target.value);
+    if (!isNaN(val) && val >= 0 && val <= 50) {
+      updateUserSpec({ ncsScore: val });
+    }
   };
 
   const handleRemoveCert = (certName: string) => {
@@ -93,11 +104,16 @@ export const SpecDiagnosisView: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Spec Input Form (5 cols on lg) */}
         <div className="lg:col-span-5 bg-white rounded-2xl p-6 ambient-shadow-card border border-[#c5c5d3]/40 flex flex-col gap-5">
-          <div className="flex items-center gap-2 pb-2 border-b border-[#f1f5f9]">
-            <span className="material-symbols-outlined text-[#0051d5]">tune</span>
-            <h3 className="font-hanken font-bold text-lg text-[#191c1e]">
-              {isKo ? '스펙 입력' : 'Spec Input'}
-            </h3>
+          <div className="flex items-center justify-between gap-2 pb-2 border-b border-[#f1f5f9]">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#0051d5]">tune</span>
+              <h3 className="font-hanken font-bold text-lg text-[#191c1e]">
+                {isKo ? '스펙 입력' : 'Spec Input'}
+              </h3>
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wide text-[#0051d5] bg-blue-50 px-2 py-1 rounded-full">
+              {isKo ? '정밀 진단' : 'Precision Audit'}
+            </span>
           </div>
 
           {/* Target Role Selector */}
@@ -105,22 +121,29 @@ export const SpecDiagnosisView: React.FC = () => {
             <label className="block text-xs font-bold text-[#191c1e] mb-1.5">
               {isKo ? '목표 기업 및 직무' : 'Target Company & Role'}
             </label>
-            <div className="relative">
-              <select
-                value={selectedCompanyId}
-                onChange={handleRoleChange}
-                className="w-full appearance-none bg-[#f7f9fb] border border-[#c5c5d3] hover:border-[#0051d5] rounded-xl py-2.5 pl-3.5 pr-10 text-xs font-medium text-[#191c1e] focus:outline-hidden focus:ring-2 focus:ring-[#00236f]/20 transition-all cursor-pointer shadow-2xs"
-              >
-                {targetRoles.map(r => (
-                  <option key={r.id} value={r.id}>
-                    {isKo ? r.labelKo : r.labelEn}
-                  </option>
-                ))}
-              </select>
-              <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-[#757682] pointer-events-none text-[18px]">
-                arrow_drop_down
-              </span>
+            <div className="rounded-xl border border-[#c5c5d3]/70 bg-[#f7f9fb] p-2 shadow-2xs">
+              <div className="relative">
+                <select
+                  value={selectedCompanyId}
+                  onChange={handleRoleChange}
+                  className="w-full appearance-none bg-transparent border border-transparent rounded-lg py-2.5 pl-3 pr-10 text-xs font-medium text-[#191c1e] focus:outline-hidden transition-all cursor-pointer"
+                >
+                  {targetRoles.map((r, index) => (
+                    <option key={`${r.id}-${index}`} value={r.id}>
+                      {isKo ? r.labelKo : r.labelEn}
+                    </option>
+                  ))}
+                </select>
+                <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-[#757682] pointer-events-none text-[18px]">
+                  arrow_drop_down
+                </span>
+              </div>
             </div>
+            <p className="text-[11px] text-[#757682] mt-2 leading-relaxed">
+              {isKo
+                ? '대기업, 공기업, 플랫폼 기업, 금융권, 전장·모빌리티 직군까지 함께 비교해볼 수 있습니다.'
+                : 'Compare across top-tier corporations, public enterprises, platform companies, banking, and engineering roles.'}
+            </p>
           </div>
 
           {/* GPA Input */}
@@ -175,6 +198,38 @@ export const SpecDiagnosisView: React.FC = () => {
               <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-[#757682] pointer-events-none text-[18px]">
                 arrow_drop_down
               </span>
+            </div>
+          </div>
+
+          {/* NCS Score */}
+          <div>
+            <div className="flex justify-between items-center mb-1.5">
+              <label className="text-xs font-bold text-[#191c1e]">
+                {isKo ? 'NCS 시험 점수 (0~50)' : 'NCS Test Score (0~50)'}
+              </label>
+              <span className="text-xs font-bold text-[#0051d5] bg-blue-50 px-2 py-0.5 rounded">
+                {Math.round(userSpec.ncsScore)} / 50
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min="0"
+                max="50"
+                step="1"
+                value={userSpec.ncsScore}
+                onChange={handleNcsChange}
+                className="flex-1 accent-[#0051d5] cursor-pointer"
+              />
+              <input
+                type="number"
+                min="0"
+                max="50"
+                step="1"
+                value={Math.round(userSpec.ncsScore)}
+                onChange={handleNcsChange}
+                className="w-16 bg-[#f7f9fb] border border-[#c5c5d3] rounded-xl py-1.5 px-2 text-center text-xs font-bold text-[#191c1e]"
+              />
             </div>
           </div>
 
@@ -319,6 +374,36 @@ export const SpecDiagnosisView: React.FC = () => {
                 cutlineProject={diagnosisResult.radarData.projectExp.cutline}
                 isLanguageWarning={diagnosisResult.radarData.language.isWarning}
               />
+            </div>
+
+            <div className="w-full mt-2 flex justify-center">
+              <div className="w-full max-w-md bg-[#f7f9fb] rounded-xl border border-[#dfe3eb] px-4 py-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-[#444651]">
+                    {isKo ? 'NCS 시험 진단' : 'NCS Diagnostic'}
+                  </span>
+                  <span
+                    className={`text-sm font-bold ${
+                      diagnosisResult.radarData.ncs.isWarning ? 'text-[#ba1a1a]' : 'text-[#0051d5]'
+                    }`}
+                  >
+                    {Math.round(diagnosisResult.radarData.ncs.user)} / 100
+                  </span>
+                </div>
+                <div className="mt-2 h-2 bg-[#e6e8ea] rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${
+                      diagnosisResult.radarData.ncs.isWarning ? 'bg-[#ff8f4f]' : 'bg-[#0051d5]'
+                    }`}
+                    style={{ width: `${Math.min(100, diagnosisResult.radarData.ncs.user)}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-[11px] text-[#757682]">
+                  {isKo
+                    ? `기준선 ${Math.round(diagnosisResult.radarData.ncs.cutline)}점 기준으로 ${diagnosisResult.radarData.ncs.user >= diagnosisResult.radarData.ncs.cutline ? '안정권' : '보완 필요'} 상태입니다.`
+                    : `Against the ${Math.round(diagnosisResult.radarData.ncs.cutline)}-point benchmark, your NCS readiness is ${diagnosisResult.radarData.ncs.user >= diagnosisResult.radarData.ncs.cutline ? 'solid' : 'needs improvement'}.`}
+                </p>
+              </div>
             </div>
 
             {/* Legend */}

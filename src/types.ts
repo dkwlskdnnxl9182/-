@@ -105,6 +105,7 @@ export interface UserSpec {
   projectCount: number;
   hasCodingTestScore: boolean;
   codingTestScore: number;
+  ncsScore: number;
 }
 
 export interface DiagnosisResult {
@@ -115,6 +116,7 @@ export interface DiagnosisResult {
     certs: { user: number; cutline: number; max: number };
     projectExp: { user: number; cutline: number; max: number };
     codingTest: { user: number; cutline: number; max: number };
+    ncs: { user: number; cutline: number; max: number; isWarning: boolean };
   };
   actionItems: Array<{
     id: string;

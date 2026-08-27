@@ -21,8 +21,8 @@ export const CalendarView: React.FC = () => {
 
   const isKo = language === 'ko';
 
-  const [currentMonthIndex, setCurrentMonthIndex] = useState<number>(10); // 10 = Nov (0-indexed)
-  const [currentYear, setCurrentYear] = useState<number>(2023);
+  const [currentMonthIndex, setCurrentMonthIndex] = useState<number>(7); // 7 = Aug (0-indexed)
+  const [currentYear, setCurrentYear] = useState<number>(2026);
 
   // Month navigation
   const handlePrevMonth = () => {
@@ -60,16 +60,17 @@ export const CalendarView: React.FC = () => {
     return true;
   });
 
-  const activePostingsCount = jobPostings.length + 138;
-  const newApplicantsCount = 854;
-  const closingThisWeekCount = filteredJobs.filter(j => j.dDay <= 7).length + 9;
-
-  // Calendar cells definition for November 2023 layout faithfully matching screenshot
-  // Week 1: 29 (prev), 30 (prev), 31 (prev), 1 (Wed, Samsung start), 2 (Thu), 3 (Fri, SK Hynix start), 4 (Sat)
-  // Week 2: 5 (Sun red), 6 (Mon), 7 (Tue), 8 (Wed), 9 (Thu, KEPCO start), 10 (Fri), 11 (Sat, Samsung end)
-  // Week 3: 12 (Sun, SK Hynix end), 13 (Mon), 14 (Tue, KEPCO end), 15 (Wed), 16 (Thu), 17 (Fri), 18 (Sat)
-  // Week 4: 19 (Sun), 20 (Mon, Hyundai end), 21 (Tue), 22 (Wed), 23 (Thu), 24 (Fri), 25 (Sat, Naver end)
-  // Week 5: 26 (Sun), 27 (Mon), 28 (Tue), 29 (Wed), 30 (Thu), 1 (next), 2 (next)
+  const activePostingsCount = jobPostings.length;
+  const newApplicantsCount = 248;
+  const closingThisWeekCount = filteredJobs.filter(j => j.dDay <= 7).length;
+  const closingSoonJobs = [...filteredJobs]
+    .sort((a, b) => {
+      const aYear = new Date(a.endDate).getFullYear();
+      const bYear = new Date(b.endDate).getFullYear();
+      if (aYear !== bYear) return bYear - aYear;
+      return new Date(a.endDate).getTime() - new Date(b.endDate).getTime();
+    })
+    .slice(0, 5);
 
   interface CalendarDay {
     dayNum: number;
@@ -89,167 +90,66 @@ export const CalendarView: React.FC = () => {
     }>;
   }
 
-  const calendarDays: CalendarDay[] = [
-    // Row 1
-    { dayNum: 29, isCurrentMonth: false, events: [] },
-    { dayNum: 30, isCurrentMonth: false, events: [] },
-    { dayNum: 31, isCurrentMonth: false, events: [] },
-    {
-      dayNum: 1,
-      isCurrentMonth: true,
-      isToday: true,
-      events: [
-        {
-          id: 'e1',
-          jobId: 'samsung-sw-2024',
-          titleKo: '삼성전자 - 시작',
-          titleEn: 'Samsung Elec - Start',
+  const monthLength = new Date(currentYear, currentMonthIndex + 1, 0).getDate();
+  const firstDayOfMonth = new Date(currentYear, currentMonthIndex, 1);
+  const firstDayIndex = firstDayOfMonth.getDay();
+  const prevMonthLastDay = new Date(currentYear, currentMonthIndex, 0).getDate();
+
+  const calendarDays: CalendarDay[] = Array.from({ length: 42 }, (_, index) => {
+    const dayOffset = index - firstDayIndex + 1;
+    const isCurrentMonth = dayOffset >= 1 && dayOffset <= monthLength;
+    const visibleDay = isCurrentMonth
+      ? dayOffset
+      : dayOffset <= 0
+        ? prevMonthLastDay + dayOffset
+        : dayOffset - monthLength;
+
+    const date = new Date(currentYear, currentMonthIndex, visibleDay);
+    const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+    const events = jobPostings.flatMap(job => {
+      const entries: CalendarDay['events'] = [];
+
+      if (job.startDate === dateString) {
+        entries.push({
+          id: `${job.id}-start`,
+          jobId: job.id,
+          titleKo: `${job.company} - 시작`,
+          titleEn: `${job.companyEn} - Start`,
           type: 'start',
           badgeBg: 'bg-[#dbe1ff]',
           badgeText: 'text-[#00174b]',
           badgeBorder: 'border-[#b4c5ff]'
-        }
-      ]
-    },
-    { dayNum: 2, isCurrentMonth: true, events: [] },
-    {
-      dayNum: 3,
-      isCurrentMonth: true,
-      events: [
-        {
-          id: 'e2',
-          jobId: 'sk-hynix-rnd-2024',
-          titleKo: 'SK하이닉스 - 시작',
-          titleEn: 'SK Hynix - Start',
-          type: 'start',
-          badgeBg: 'bg-[#ffdbca]',
-          badgeText: 'text-[#341100]',
-          badgeBorder: 'border-[#ffb690]'
-        }
-      ]
-    },
-    { dayNum: 4, isCurrentMonth: true, isSaturday: true, events: [] },
+        });
+      }
 
-    // Row 2
-    { dayNum: 5, isCurrentMonth: true, isSunday: true, events: [] },
-    { dayNum: 6, isCurrentMonth: true, events: [] },
-    { dayNum: 7, isCurrentMonth: true, events: [] },
-    { dayNum: 8, isCurrentMonth: true, events: [] },
-    {
-      dayNum: 9,
-      isCurrentMonth: true,
-      events: [
-        {
-          id: 'e3',
-          jobId: 'kepco-admin-2024',
-          titleKo: '한국전력 - 시작',
-          titleEn: 'KEPCO - Start',
-          type: 'start',
-          badgeBg: 'bg-[#dce1ff]',
-          badgeText: 'text-[#00164e]',
-          badgeBorder: 'border-[#b6c4ff]'
-        }
-      ]
-    },
-    { dayNum: 10, isCurrentMonth: true, events: [] },
-    {
-      dayNum: 11,
-      isCurrentMonth: true,
-      isSaturday: true,
-      events: [
-        {
-          id: 'e4',
-          jobId: 'samsung-sw-2024',
-          titleKo: '삼성전자 - 마감',
-          titleEn: 'Samsung Elec - End',
+      if (job.endDate === dateString) {
+        entries.push({
+          id: `${job.id}-end`,
+          jobId: job.id,
+          titleKo: `${job.company} - 마감`,
+          titleEn: `${job.companyEn} - End`,
           type: 'end',
           badgeBg: 'bg-[#ffdad6]',
           badgeText: 'text-[#93000a]',
           badgeBorder: 'border-[#ba1a1a]/30'
-        }
-      ]
-    },
+        });
+      }
 
-    // Row 3
-    {
-      dayNum: 12,
-      isCurrentMonth: true,
-      isSunday: true,
-      events: [
-        {
-          id: 'e5',
-          jobId: 'sk-hynix-rnd-2024',
-          titleKo: 'SK하이닉스 - 마감',
-          titleEn: 'SK Hynix - End',
-          type: 'end',
-          badgeBg: 'bg-[#ffdad6]',
-          badgeText: 'text-[#93000a]',
-          badgeBorder: 'border-[#ba1a1a]/30'
-        }
-      ]
-    },
-    { dayNum: 13, isCurrentMonth: true, events: [] },
-    {
-      dayNum: 14,
-      isCurrentMonth: true,
-      events: [
-        {
-          id: 'e6',
-          jobId: 'kepco-admin-2024',
-          titleKo: '한국전력 - 마감',
-          titleEn: 'KEPCO - End',
-          type: 'end',
-          badgeBg: 'bg-[#ffdad6]',
-          badgeText: 'text-[#93000a]',
-          badgeBorder: 'border-[#ba1a1a]/30'
-        }
-      ]
-    },
-    { dayNum: 15, isCurrentMonth: true, events: [] },
-    { dayNum: 16, isCurrentMonth: true, events: [] },
-    { dayNum: 17, isCurrentMonth: true, events: [] },
-    { dayNum: 18, isCurrentMonth: true, isSaturday: true, events: [] },
+      return entries;
+    });
 
-    // Row 4
-    { dayNum: 19, isCurrentMonth: true, isSunday: true, events: [] },
-    {
-      dayNum: 20,
-      isCurrentMonth: true,
-      events: [
-        {
-          id: 'e7',
-          jobId: 'hyundai-mobility-sw',
-          titleKo: '현대차 - 마감',
-          titleEn: 'Hyundai - End',
-          type: 'end',
-          badgeBg: 'bg-[#ffdad6]',
-          badgeText: 'text-[#93000a]',
-          badgeBorder: 'border-[#ba1a1a]/30'
-        }
-      ]
-    },
-    { dayNum: 21, isCurrentMonth: true, events: [] },
-    { dayNum: 22, isCurrentMonth: true, events: [] },
-    { dayNum: 23, isCurrentMonth: true, events: [] },
-    { dayNum: 24, isCurrentMonth: true, events: [] },
-    {
-      dayNum: 25,
-      isCurrentMonth: true,
-      isSaturday: true,
-      events: [
-        {
-          id: 'e8',
-          jobId: 'naver-cloud-ai',
-          titleKo: '네이버 - 마감',
-          titleEn: 'NAVER - End',
-          type: 'end',
-          badgeBg: 'bg-[#ffdad6]',
-          badgeText: 'text-[#93000a]',
-          badgeBorder: 'border-[#ba1a1a]/30'
-        }
-      ]
-    }
-  ];
+    const today = new Date();
+
+    return {
+      dayNum: visibleDay,
+      isCurrentMonth,
+      isSunday: date.getDay() === 0,
+      isSaturday: date.getDay() === 6,
+      isToday: date.getFullYear() === today.getFullYear() && date.getMonth() === today.getMonth() && date.getDate() === today.getDate(),
+      events
+    };
+  });
 
   const handleEventClick = (jobId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -501,7 +401,7 @@ export const CalendarView: React.FC = () => {
 
             {/* Job Cards List */}
             <div className="flex flex-col gap-3 overflow-y-auto max-h-[560px] pr-1">
-              {filteredJobs.slice(0, 5).map(job => {
+              {closingSoonJobs.map(job => {
                 const isBookmarked = bookmarks.includes(job.id);
                 const dDayBadgeColor =
                   job.dDay === 0
